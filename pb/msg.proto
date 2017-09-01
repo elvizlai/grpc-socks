@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pb;
+
+message Payload {
+    bytes data = 1;
+}
+
+service ProxyService {
+    rpc Echo (Payload) returns (Payload) {
+    };
+
+    rpc Pipeline (stream Payload) returns (stream Payload) {
+    };
+
+    rpc PipelineUDP (stream Payload) returns (stream Payload) {
+    };
+}
