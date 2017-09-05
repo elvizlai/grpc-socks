@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net"
 	"time"
 
 	"../lib"
 	"../pb"
+	"../log"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -25,7 +25,11 @@ func init() {
 	flag.Parse()
 
 	if remoteAddr == "" {
-		log.Fatalln("remote addr can not be empty")
+		log.Fatalf("remote addr can not be empty")
+	}
+
+	if debug {
+		log.SetDebugMode()
 	}
 }
 
@@ -33,7 +37,7 @@ func main() {
 	// try to establish gRPC conn
 	client, err := gRPCClient()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(err.Error())
 	} else {
 		ctx, delayTestFrame := context.Background(), &pb.Payload{Data: []byte{0x2e, 0xf6, 0xae, 0x1e, 0x83}}
 
@@ -45,9 +49,9 @@ func main() {
 				client.Echo(ctx, delayTestFrame)
 				total += time.Now().Sub(s)
 			}
-			log.Printf("conn to server time dely: %s\n", total/time.Duration(n))
+			log.Infof("conn to server time delay: %s", total/time.Duration(n))
 		} else {
-			log.Printf("WARN, %s\n", err)
+			log.Errorf("WARN, %s", err)
 		}
 	}
 
@@ -59,15 +63,15 @@ func main() {
 
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf(err.Error())
 	}
 
-	log.Printf("starting server tcp at %v ...\n", addr)
+	log.Infof("starting server tcp at %v ...", addr)
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Println("accept err:", err)
+			log.Errorf("accept err: %v", err)
 			continue
 		}
 

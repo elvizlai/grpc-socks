@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"log"
 	"net"
 	"time"
 
 	"../lib"
 	"../pb"
+	"../log"
 
 	"golang.org/x/net/context"
 )
@@ -22,13 +22,9 @@ var leakyBuf = lib.NewLeakyBuf(maxNBuf, leakyBufSize)
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	if debug {
-		log.Printf("socks connect from %q\n", conn.RemoteAddr().String())
-	}
-
 	cmd, err := lib.Handshake(conn)
 	if err != nil {
-		log.Printf("socks handshake err: %s", err)
+		log.Errorf("socks handshake err: %s", err)
 		return
 	}
 
@@ -38,6 +34,7 @@ func handleConnection(conn net.Conn) {
 	case lib.CmdUDPAssociate:
 		udpHandler(conn)
 	default:
+		log.Errorf("socks cmd %v not supported", cmd)
 		return
 	}
 }
@@ -45,14 +42,13 @@ func handleConnection(conn net.Conn) {
 func tcpHandler(conn net.Conn) {
 	addr, err := lib.GetReqAddr(conn)
 	if err != nil {
-		log.Printf("get request err: %s\n", err)
+		log.Errorf("get req addr err: %s", err)
 		return
 	}
 
 	addrStr := addr.String()
-	if debug {
-		log.Printf("target addr tcp %q\n", addrStr)
-	}
+
+	log.Debugf("tcp conn  %q<-->%q", conn.RemoteAddr().String(), addrStr)
 
 	// Sending connection established message immediately to client.
 	// This cost some round trip time for creating socks connection with the client.
@@ -67,19 +63,19 @@ func tcpHandler(conn net.Conn) {
 
 	client, err := gRPCClient()
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err.Error())
 		return
 	}
 
 	stream, err := client.Pipeline(context.Background())
 	if err != nil {
-		log.Printf("establish stream err: %s\n", err)
+		log.Errorf("establish stream err: %s", err)
 		return
 	}
 	defer func() {
 		err = stream.CloseSend()
 		if err != nil {
-			log.Printf("close stream err: %s\n", err)
+			log.Errorf("close stream err: %s", err)
 		}
 	}()
 
@@ -91,13 +87,13 @@ func tcpHandler(conn net.Conn) {
 			}
 
 			if err != nil {
-				log.Printf("stream recv err: %s\n", err)
+				log.Errorf("stream recv err: %s", err)
 				break
 			}
 
 			_, err = conn.Write(p.Data)
 			if err != nil {
-				log.Printf("conn write err: %s\n", err)
+				log.Errorf("conn write err: %s", err)
 				break
 			}
 		}
@@ -107,7 +103,7 @@ func tcpHandler(conn net.Conn) {
 
 	err = stream.Send(frame)
 	if err != nil {
-		log.Printf("first frame send err: %s\n", err)
+		log.Errorf("first frame send err: %s", err)
 		return
 	}
 
@@ -122,7 +118,7 @@ func tcpHandler(conn net.Conn) {
 			frame.Data = buff[:n]
 			err = stream.Send(frame)
 			if err != nil {
-				log.Printf("stream send err: %s\n", err)
+				log.Errorf("stream send err: %s", err)
 				return
 			}
 		}
@@ -140,22 +136,20 @@ func tcpHandler(conn net.Conn) {
 		}
 	}
 
-	if debug {
-		log.Printf("closed tcp connection to %s\n", addr)
-	}
+	log.Debugf("tcp close %q<-->%q", conn.RemoteAddr().String(), addrStr)
 }
 
 func udpHandler(conn net.Conn) {
 	// do not using client indicate add
 	_, err := lib.GetReqAddr(conn)
 	if err != nil {
-		log.Printf("get request err: %s\n", err)
+		log.Errorf("get request err: %s", err)
 		return
 	}
 
 	udpLn, err := net.ListenPacket("udp", "")
 	if err != nil {
-		log.Printf("create udp conn err: %s\n", err)
+		log.Errorf("create udp conn err: %s", err)
 		// optional reply
 		// 05 01 00 ... for generate ip field
 		return
@@ -177,19 +171,19 @@ func udpHandler(conn net.Conn) {
 
 	client, err := gRPCClient()
 	if err != nil {
-		log.Println(err)
+		log.Errorln(err)
 		return
 	}
 
 	stream, err := client.PipelineUDP(context.Background())
 	if err != nil {
-		log.Printf("establish stream err: %s\n", err)
+		log.Errorf("establish stream err: %s", err)
 		return
 	}
 	defer func() {
 		err = stream.CloseSend()
 		if err != nil {
-			log.Printf("close stream err: %s\n", err)
+			log.Errorf("close stream err: %s", err)
 		}
 	}()
 
@@ -209,19 +203,17 @@ func udpHandler(conn net.Conn) {
 			}
 
 			if err != nil {
-				log.Printf("stream recv err: %s\n", err)
+				log.Errorf("stream recv err: %s", err)
 				break
 			}
 
 			_, err = udpLn.WriteTo(p.Data, netInfo.BNDAddr)
 			if err != nil {
-				log.Printf("conn write err: %s\n", err)
+				log.Errorf("conn write err: %s", err)
 				break
 			}
 
-			if debug {
-				log.Printf("udp %q <-- %q\n", netInfo.BNDAddr.String(), netInfo.DSTAddr)
-			}
+			log.Debugf("udp %q <-- %q", netInfo.BNDAddr.String(), netInfo.DSTAddr)
 		}
 	}()
 
@@ -249,15 +241,13 @@ func udpHandler(conn net.Conn) {
 
 				netInfo.DSTAddr = dst.String()
 
-				if debug {
-					log.Printf("udp %q --> %q\n", netInfo.BNDAddr.String(), netInfo.DSTAddr)
-				}
+				log.Debugf("udp %q --> %q", netInfo.BNDAddr.String(), netInfo.DSTAddr)
 
 				if !first {
 					first = true
 					err := stream.Send(&pb.Payload{Data: []byte(netInfo.DSTAddr)})
 					if err != nil {
-						log.Printf("first frame send err: %s\n", err)
+						log.Errorf("first frame send err: %s", err)
 						return
 					}
 				}
@@ -266,7 +256,7 @@ func udpHandler(conn net.Conn) {
 
 				err = stream.Send(&pb.Payload{Data: data})
 				if err != nil {
-					log.Printf("stream send err: %s\n", err)
+					log.Errorf("stream send err: %s", err)
 					return
 				}
 			}(buff)
@@ -278,7 +268,5 @@ func udpHandler(conn net.Conn) {
 		}
 	}
 
-	if debug {
-		log.Printf("closed udp connection to %s\n", netInfo.DSTAddr)
-	}
+	log.Debugf("closed udp connection to %s", netInfo.DSTAddr)
 }

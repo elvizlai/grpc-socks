@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net"
 
 	"../lib"
 	"../pb"
+	"../log"
 
 	"google.golang.org/grpc"
 )
@@ -19,6 +19,10 @@ func init() {
 	flag.BoolVar(&debug, "d", debug, "debug mode")
 
 	flag.Parse()
+
+	if debug {
+		log.SetDebugMode()
+	}
 }
 
 func main() {
@@ -28,9 +32,9 @@ func main() {
 	}
 	defer lis.Close()
 
-	log.Printf("starting proxy server at %q ...\n", addr)
+	log.Infof("starting proxy server at %q ...", addr)
 
-	s := grpc.NewServer(grpc.Creds(lib.ServerTLS()))
+	s := grpc.NewServer(grpc.Creds(lib.ServerTLS()), grpc.StreamInterceptor(interceptor))
 	defer s.GracefulStop()
 
 	pb.RegisterProxyServiceServer(s, &proxy{})
@@ -38,4 +42,9 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)
 	}
+}
+
+func interceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+
+	return handler(srv, ss)
 }

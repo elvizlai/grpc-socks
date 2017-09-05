@@ -2,14 +2,15 @@ package main
 
 import (
 	"io"
-	"log"
 	"net"
 	"time"
 
 	"../lib"
 	"../pb"
+	"../log"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/peer"
 )
 
 type proxy struct {
@@ -29,22 +30,28 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 
 	err := stream.RecvMsg(frame)
 	if err != nil {
-		log.Printf("tcp first frame err: %s\n", err)
+		log.Errorf("tcp first frame err: %s", err)
 		return err
 	}
 
 	addr := string(frame.Data)
 
-	if debug {
-		log.Printf("recv tcp addr: %s\n", addr)
-	}
-
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		log.Printf("tcp dail %s err: %s\n", addr, err)
+		log.Errorf("tcp dial %s err: %s", addr, err)
 		return err
 	}
 	defer conn.Close()
+	conn.(*net.TCPConn).SetKeepAlive(true)
+
+	// get peer info
+	ctx := stream.Context()
+	info, ok := peer.FromContext(ctx)
+	if ok {
+		log.Debugf("tcp conn  %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
+	} else {
+		log.Debugf("tcp conn  %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
+	}
 
 	// set read deadline
 	conn.SetReadDeadline(time.Now().Add(time.Second * 600))
@@ -60,7 +67,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 				frame.Data = buff[:n]
 				err = stream.Send(frame)
 				if err != nil {
-					log.Printf("stream send err: %s\n", err)
+					log.Errorf("stream send err: %s", err)
 					break
 				}
 			}
@@ -75,19 +82,28 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 		p, err := stream.Recv()
 
 		if err == io.EOF {
-			return nil
+			break
 		}
 
 		if err != nil {
-			log.Printf("stream recv err: %s\n", err)
+			if stream.Context().Err() == context.Canceled {
+				break
+			}
+			log.Errorf("stream recv err: %s", err)
 			return err
 		}
 
 		_, err = conn.Write(p.Data)
 		if err != nil {
-			log.Printf("tcp conn write err: %s\n", err)
+			log.Errorf("tcp conn write err: %s", err)
 			return err
 		}
+	}
+
+	if ok {
+		log.Debugf("tcp close %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
+	} else {
+		log.Debugf("tcp close %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
 	}
 
 	return nil
@@ -98,19 +114,17 @@ func (p *proxy) PipelineUDP(stream pb.ProxyService_PipelineUDPServer) error {
 
 	err := stream.RecvMsg(frame)
 	if err != nil {
-		log.Printf("udp first frame err: %s\n", err)
+		log.Errorf("udp first frame err: %s", err)
 		return err
 	}
 
 	addr := string(frame.Data)
 
-	if debug {
-		log.Printf("recv udp addr: %s\n", addr)
-	}
+	log.Debugf("recv udp addr: %s", addr)
 
 	conn, err := net.Dial("udp", addr)
 	if err != nil {
-		log.Printf("udp dail %s err: %s\n", addr, err)
+		log.Errorf("udp dial %s err: %s", addr, err)
 		return err
 	}
 	defer conn.Close()
@@ -126,7 +140,7 @@ func (p *proxy) PipelineUDP(stream pb.ProxyService_PipelineUDPServer) error {
 				frame.Data = buff[:n]
 				err = stream.Send(frame)
 				if err != nil {
-					log.Printf("stream send err: %s\n", err)
+					log.Errorf("stream send err: %s", err)
 					break
 				}
 			}
@@ -145,13 +159,13 @@ func (p *proxy) PipelineUDP(stream pb.ProxyService_PipelineUDPServer) error {
 		}
 
 		if err != nil {
-			log.Printf("stream recv err: %s\n", err)
+			log.Errorf("stream recv err: %s", err)
 			return err
 		}
 
 		_, err = conn.Write(p.Data)
 		if err != nil {
-			log.Printf("udp conn write err: %s\n", err)
+			log.Errorf("udp conn write err: %s", err)
 			return err
 		}
 	}
