@@ -73,21 +73,24 @@ func tcpHandler(conn net.Conn) {
 		return
 	}
 	defer func() {
-		err = stream.CloseSend()
-		if err != nil {
-			log.Errorf("close stream err: %s", err)
-		}
+		stream.CloseSend()
 	}()
+
+	isClosed := false
 
 	go func() {
 		for {
 			p, err := stream.Recv()
-			if err == io.EOF {
+
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				log.Errorf("stream recv err: %s", err)
 				break
 			}
 
-			if err != nil {
-				log.Errorf("stream recv err: %s", err)
+			if isClosed {
 				break
 			}
 
@@ -96,6 +99,10 @@ func tcpHandler(conn net.Conn) {
 				log.Errorf("conn write err: %s", err)
 				break
 			}
+		}
+
+		if !isClosed {
+			isClosed = true
 		}
 	}()
 
@@ -111,8 +118,11 @@ func tcpHandler(conn net.Conn) {
 	defer leakyBuf.Put(buff)
 
 	for {
-		// set read timeout
 		n, err := conn.Read(buff)
+
+		if isClosed {
+			break
+		}
 
 		if n > 0 {
 			frame.Data = buff[:n]
@@ -135,6 +145,8 @@ func tcpHandler(conn net.Conn) {
 			break
 		}
 	}
+
+	isClosed = true
 
 	log.Debugf("tcp close %q<-->%q", conn.RemoteAddr().String(), addrStr)
 }

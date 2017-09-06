@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"../lib"
-	"../pb"
 	"../log"
+	"../pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
@@ -42,10 +42,11 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 		return err
 	}
 	defer conn.Close()
+
 	conn.(*net.TCPConn).SetKeepAlive(true)
 
-	// get peer info
 	ctx := stream.Context()
+	// get peer info from ctx, maybe it won't be nil is this case
 	info, ok := peer.FromContext(ctx)
 	if ok {
 		log.Debugf("tcp conn  %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
@@ -53,8 +54,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 		log.Debugf("tcp conn  %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
 	}
 
-	// set read deadline
-	conn.SetReadDeadline(time.Now().Add(time.Second * 600))
+	isClosed := false
 
 	go func() {
 		buff := leakyBuf.Get()
@@ -76,21 +76,23 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 				break
 			}
 		}
+
+		isClosed = true
 	}()
 
 	for {
 		p, err := stream.Recv()
 
-		if err == io.EOF {
-			break
-		}
-
 		if err != nil {
-			if stream.Context().Err() == context.Canceled {
+			if ctx.Err() == context.Canceled || err == io.EOF {
 				break
 			}
 			log.Errorf("stream recv err: %s", err)
 			return err
+		}
+
+		if isClosed {
+			break
 		}
 
 		_, err = conn.Write(p.Data)
@@ -131,6 +133,8 @@ func (p *proxy) PipelineUDP(stream pb.ProxyService_PipelineUDPServer) error {
 
 	conn.SetReadDeadline(time.Now().Add(time.Second * 600))
 
+	ctx := stream.Context()
+
 	go func() {
 		buff := make([]byte, lib.UDPMaxSize)
 
@@ -159,6 +163,9 @@ func (p *proxy) PipelineUDP(stream pb.ProxyService_PipelineUDPServer) error {
 		}
 
 		if err != nil {
+			if ctx.Err() == context.Canceled {
+				break
+			}
 			log.Errorf("stream recv err: %s", err)
 			return err
 		}
