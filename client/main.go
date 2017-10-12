@@ -3,11 +3,13 @@ package main
 import (
 	"flag"
 	"net"
+	"os"
+	"runtime"
 	"time"
 
 	"../lib"
-	"../pb"
 	"../log"
+	"../pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -16,13 +18,22 @@ import (
 var addr = ":50050"
 var remoteAddr = ""
 var debug bool
+var showVersion bool
+
+var version = "self-build"
 
 func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
 	flag.StringVar(&remoteAddr, "r", remoteAddr, "remote addr")
 	flag.BoolVar(&debug, "d", false, "debug mode")
+	flag.BoolVar(&showVersion, "v", false, "show version then exist")
 
 	flag.Parse()
+
+	if showVersion {
+		log.Infof("version: %s, using: %s", version, runtime.Version())
+		os.Exit(0)
+	}
 
 	if remoteAddr == "" {
 		log.Fatalf("remote addr can not be empty")

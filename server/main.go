@@ -3,22 +3,33 @@ package main
 import (
 	"flag"
 	"net"
+	"os"
+	"runtime"
 
 	"../lib"
-	"../pb"
 	"../log"
+	"../pb"
 
 	"google.golang.org/grpc"
 )
 
 var addr = ":50051"
 var debug = false
+var showVersion bool
+
+var version = "self-build"
 
 func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
 	flag.BoolVar(&debug, "d", debug, "debug mode")
+	flag.BoolVar(&showVersion, "v", false, "show version then exist")
 
 	flag.Parse()
+
+	if showVersion {
+		log.Infof("version: %s, using: %s", version, runtime.Version())
+		os.Exit(0)
+	}
 
 	if debug {
 		log.SetDebugMode()
