@@ -26,7 +26,7 @@ func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
 	flag.StringVar(&remoteAddr, "r", remoteAddr, "remote addr")
 	flag.BoolVar(&debug, "d", false, "debug mode")
-	flag.BoolVar(&showVersion, "v", false, "show version then exist")
+	flag.BoolVar(&showVersion, "v", false, "show version then exit")
 
 	flag.Parse()
 
