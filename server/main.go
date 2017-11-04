@@ -22,7 +22,7 @@ var version = "self-build"
 func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
 	flag.BoolVar(&debug, "d", debug, "debug mode")
-	flag.BoolVar(&showVersion, "v", false, "show version then exist")
+	flag.BoolVar(&showVersion, "v", false, "show version then exit")
 
 	flag.Parse()
 
