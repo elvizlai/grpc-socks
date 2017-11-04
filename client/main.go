@@ -13,11 +13,13 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/encoding"
 )
 
 var addr = ":50050"
 var remoteAddr = ""
 var debug bool
+var compress bool
 var showVersion bool
 
 var version = "self-build"
@@ -26,6 +28,7 @@ func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
 	flag.StringVar(&remoteAddr, "r", remoteAddr, "remote addr")
 	flag.BoolVar(&debug, "d", false, "debug mode")
+	flag.BoolVar(&compress, "cp", compress, "enable snappy compress")
 	flag.BoolVar(&showVersion, "v", false, "show version then exit")
 
 	flag.Parse()
@@ -37,6 +40,11 @@ func init() {
 
 	if remoteAddr == "" {
 		log.Fatalf("remote addr can not be empty")
+	}
+
+	if compress {
+		encoding.RegisterCompressor(lib.Snappy())
+		callOptions = append(callOptions, grpc.UseCompressor("snappy"))
 	}
 
 	if debug {

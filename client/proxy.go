@@ -12,12 +12,15 @@ import (
 	"../log"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 const leakyBufSize = 4108 // data.len(2) + hmacsha1(10) + data(4096)
 const maxNBuf = 2048
 
 var leakyBuf = lib.NewLeakyBuf(maxNBuf, leakyBufSize)
+
+var callOptions = make([]grpc.CallOption, 0)
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
@@ -67,7 +70,7 @@ func tcpHandler(conn net.Conn) {
 		return
 	}
 
-	stream, err := client.Pipeline(context.Background())
+	stream, err := client.Pipeline(context.Background(), callOptions...)
 	if err != nil {
 		log.Errorf("establish stream err: %s", err)
 		return
@@ -187,7 +190,7 @@ func udpHandler(conn net.Conn) {
 		return
 	}
 
-	stream, err := client.PipelineUDP(context.Background())
+	stream, err := client.PipelineUDP(context.Background(), callOptions...)
 	if err != nil {
 		log.Errorf("establish stream err: %s", err)
 		return
