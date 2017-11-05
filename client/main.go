@@ -58,9 +58,9 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	} else {
-		ctx, delayTestFrame := context.Background(), &pb.Payload{Data: []byte{0x2e, 0xf6, 0xae, 0x1e, 0x83}}
+		ctx, delayTestFrame := context.Background(), &pb.Payload{}
 
-		_, err = client.Echo(ctx, delayTestFrame)
+		_, err = client.Echo(ctx, delayTestFrame, callOptions...)
 		if err == nil {
 			var total, n = time.Duration(0), 3
 			for i := 0; i < n; i++ {
