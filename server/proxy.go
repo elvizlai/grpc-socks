@@ -22,7 +22,7 @@ const maxNBuf = 2048
 var leakyBuf = lib.NewLeakyBuf(maxNBuf, leakyBufSize)
 
 func (p *proxy) Echo(ctx context.Context, req *pb.Payload) (*pb.Payload, error) {
-	return req, nil
+	return &pb.Payload{Data: []byte{0x2e, 0xf6, 0xae, 0x1e, 0x82}}, nil
 }
 
 func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
