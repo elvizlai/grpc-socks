@@ -32,11 +32,11 @@ func init() {
 		os.Exit(0)
 	}
 
-	encoding.RegisterCompressor(lib.Snappy())
-
 	if debug {
 		log.SetDebugMode()
 	}
+
+	encoding.RegisterCompressor(lib.Snappy())
 }
 
 func main() {
