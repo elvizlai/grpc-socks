@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 )
 
 const leakyBufSize = 4108 // data.len(2) + hmacsha1(10) + data(4096)
@@ -49,10 +50,6 @@ func tcpHandler(conn net.Conn) {
 		return
 	}
 
-	addrStr := addr.String()
-
-	log.Debugf("tcp conn  %q<-->%q", conn.RemoteAddr().String(), addrStr)
-
 	// Sending connection established message immediately to client.
 	// This cost some round trip time for creating socks connection with the client.
 	// But if connection failed, the client will get connection reset error.
@@ -75,9 +72,18 @@ func tcpHandler(conn net.Conn) {
 		log.Errorf("establish stream err: %s", err)
 		return
 	}
-	defer func() {
-		stream.CloseSend()
-	}()
+	defer stream.CloseSend()
+
+	addrStr := addr.String()
+
+	info, ok := peer.FromContext(stream.Context())
+	if ok {
+		defer log.Debugf("tcp close %q<-->%q<-->%q", conn.RemoteAddr().String(), info.Addr.String(), addrStr)
+		log.Debugf("tcp estab %q<-->%q<-->%q", conn.RemoteAddr().String(), info.Addr.String(), addrStr)
+	} else {
+		defer log.Debugf("tcp close %q<-->%q", conn.RemoteAddr().String(), addrStr)
+		log.Debugf("tcp estab %q<-->%q", conn.RemoteAddr().String(), addrStr)
+	}
 
 	isClosed := false
 
@@ -104,9 +110,7 @@ func tcpHandler(conn net.Conn) {
 			}
 		}
 
-		if !isClosed {
-			isClosed = true
-		}
+		isClosed = true
 	}()
 
 	frame := &pb.Payload{Data: []byte(addrStr)}
@@ -150,8 +154,6 @@ func tcpHandler(conn net.Conn) {
 	}
 
 	isClosed = true
-
-	log.Debugf("tcp close %q<-->%q", conn.RemoteAddr().String(), addrStr)
 }
 
 func udpHandler(conn net.Conn) {
@@ -196,8 +198,7 @@ func udpHandler(conn net.Conn) {
 		return
 	}
 	defer func() {
-		err = stream.CloseSend()
-		if err != nil {
+		if err = stream.CloseSend(); err != nil {
 			log.Errorf("close stream err: %s", err)
 		}
 	}()
