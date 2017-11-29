@@ -14,6 +14,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
+	"google.golang.org/grpc/balancer"
+	"google.golang.org/grpc/resolver"
 )
 
 var addr = ":50050"
@@ -21,14 +23,18 @@ var remoteAddr = ""
 var debug bool
 var compress bool
 var showVersion bool
+var tolerant uint
+var period uint
 
 var version = "self-build"
 
 func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
-	flag.StringVar(&remoteAddr, "r", remoteAddr, "remote addr")
-	flag.BoolVar(&debug, "d", false, "debug mode")
+	flag.StringVar(&remoteAddr, "r", remoteAddr, "remote addr, if multi, using ',' to split")
 	flag.BoolVar(&compress, "cp", compress, "enable snappy compress")
+	flag.UintVar(&tolerant, "t", 500, "tolerant of delay (ms), 0 means no check")
+	flag.UintVar(&period, "p", 15, "period of delay check (minute), 0 means check once")
+	flag.BoolVar(&debug, "d", false, "debug mode")
 	flag.BoolVar(&showVersion, "v", false, "show version then exit")
 
 	flag.Parse()
@@ -38,6 +44,10 @@ func init() {
 		os.Exit(0)
 	}
 
+	if debug {
+		log.SetDebugMode()
+	}
+
 	if remoteAddr == "" {
 		log.Fatalf("remote addr can not be empty")
 	}
@@ -45,10 +55,6 @@ func init() {
 	if compress {
 		encoding.RegisterCompressor(lib.Snappy())
 		callOptions = append(callOptions, grpc.UseCompressor("snappy"))
-	}
-
-	if debug {
-		log.SetDebugMode()
 	}
 }
 
@@ -117,7 +123,11 @@ var client *Client
 // using conn/client pool is better, but not necessary now
 func gRPCClient() (*Client, error) {
 	if client == nil {
-		conn, err := grpc.Dial(remoteAddr, grpc.WithTransportCredentials(lib.ClientTLS()))
+		rr := balancer.Get("round_robin")
+
+		resolver.Register(&etcdResolver{})
+
+		conn, err := grpc.Dial("proxy:///"+remoteAddr, grpc.WithBalancerBuilder(rr), grpc.WithTransportCredentials(lib.ClientTLS()))
 		if err != nil {
 			return nil, err
 		}
