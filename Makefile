@@ -7,9 +7,9 @@ idl:
 bin:
 	rm -rf exec_bin
 	mkdir exec_bin
-	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.version=$(version)" -o ./exec_bin/server-darwin ./server/*.go
-	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.version=$(version)" -o ./exec_bin/client-darwin ./client/*.go
 	GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.version=$(version)" -o ./exec_bin/server-linux ./server/*.go
 	GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.version=$(version)" -o ./exec_bin/client-linux ./client/*.go
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.version=$(version)" -o ./exec_bin/client-darwin ./client/*.go
+	GOOS=linux GOARCH=arm go build -ldflags "-s -w -X main.version=$(version)" -o ./exec_bin/client-arm ./client/*.go
 
 
