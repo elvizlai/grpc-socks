@@ -1,19 +1,19 @@
 package main
 
 import (
-	"crypto/x509"
-	"io/ioutil"
 	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 
 	"../../pb"
 
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
-	"fmt"
 )
 
 var (

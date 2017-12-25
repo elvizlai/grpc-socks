@@ -53,13 +53,13 @@ func (a Addr) String() string {
 
 	switch a[0] { // address type
 	case AtypIPv4:
-		host = net.IP(a[1: 1+net.IPv4len]).String()
+		host = net.IP(a[1 : 1+net.IPv4len]).String()
 		port = strconv.Itoa((int(a[1+net.IPv4len]) << 8) | int(a[1+net.IPv4len+1]))
 	case AtypDomainName:
-		host = string(a[2: 2+int(a[1])])
+		host = string(a[2 : 2+int(a[1])])
 		port = strconv.Itoa((int(a[2+int(a[1])]) << 8) | int(a[2+int(a[1])+1]))
 	case AtypIPv6:
-		host = net.IP(a[1: 1+net.IPv6len]).String()
+		host = net.IP(a[1 : 1+net.IPv6len]).String()
 		port = strconv.Itoa((int(a[1+net.IPv6len]) << 8) | int(a[1+net.IPv6len+1]))
 	}
 
@@ -88,12 +88,12 @@ func (a Addr) String() string {
 */
 
 /*
-    +----+-----+-------+------+----------+----------+
-    |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
-    +----+-----+-------+------+----------+----------+
-    | 1  |  1  | X'00' |  1   | Variable |    2     |
-    +----+-----+-------+------+----------+----------+
- */
+   +----+-----+-------+------+----------+----------+
+   |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
+   +----+-----+-------+------+----------+----------+
+   | 1  |  1  | X'00' |  1   | Variable |    2     |
+   +----+-----+-------+------+----------+----------+
+*/
 
 func readAddr(r io.Reader, b []byte) (Addr, error) {
 	if len(b) < MaxAddrLen {

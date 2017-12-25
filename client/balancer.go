@@ -2,15 +2,15 @@ package main
 
 import (
 	"../lib"
-	"../pb"
 	"../log"
+	"../pb"
 
 	"strings"
 	"time"
 
-	"google.golang.org/grpc/resolver"
-	"google.golang.org/grpc"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/resolver"
 )
 
 type etcdResolver struct {
@@ -73,26 +73,29 @@ func (r *etcdResolver) watch(addr string) {
 	timer := time.NewTimer(pt)
 
 	for {
-		var list []resolver.Address
+		var list, dropList []resolver.Address
 
 		for k, v := range acm {
 			if v != nil {
-				if delay := measure(v); delay <= maxTolerant {
-					log.Debugf("service %s, time delay: %s", k, delay)
-					list = append(list, resolver.Address{Addr: k})
+				if delay, err := measure(v); err == nil {
+					if delay <= maxTolerant {
+						log.Debugf("service %s, time delay: %s", k, delay)
+						list = append(list, resolver.Address{Addr: k})
+					} else {
+						log.Warnf("service %s, time delay %s too high, drop", k, delay)
+						dropList = append(dropList, resolver.Address{Addr: k})
+					}
 				} else {
-					log.Warnf("service %s, time delay %s too high, drop", k, delay)
+					log.Errorf("conn to service %s failed, err: %s", k, err)
 				}
 			} else {
 				log.Errorf("conn to service %s failed", k)
 			}
 		}
 
-		// append all if list is empty. TODO optimize, better chosen reachable service
 		if len(list) == 0 {
-			for k := range acm {
-				list = append(list, resolver.Address{Addr: k})
-			}
+			log.Errorf("no available services, try using drop list: %v", dropList)
+			list = dropList
 		}
 
 		r.cc.NewAddress(list)
@@ -108,22 +111,37 @@ func (r *etcdResolver) watch(addr string) {
 
 }
 
-// TODO timeout handle
-func measure(c pb.ProxyServiceClient) (dur time.Duration) {
+func measure(c pb.ProxyServiceClient) (dur time.Duration, err error) {
 	defer func(cur time.Time) {
-		dur = time.Now().Sub(cur) / 3
+		dur = time.Now().Sub(cur)
 	}(time.Now())
 
+	var errChan = make(chan error, 3)
+
 	for i := 0; i < 3; i++ {
-		func() {
+		go func() {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancelFunc()
-			_, err := c.Echo(ctx, &pb.Payload{})
-			if err == context.Canceled {
-				log.Warnf("time out")
-			}
+			_, err = c.Echo(ctx, &pb.Payload{})
+			errChan <- err
 		}()
 	}
 
-	return dur
+	rc := 0
+
+L:
+	for {
+		select {
+		case e := <-errChan:
+			if e != nil {
+				return dur, e
+			}
+			rc++
+			if rc == 3 {
+				break L
+			}
+		}
+	}
+
+	return dur, err
 }

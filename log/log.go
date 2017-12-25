@@ -1,8 +1,8 @@
 package log
 
 import (
-	"os"
 	"log"
+	"os"
 )
 
 var std = log.New(os.Stdout, "", log.LstdFlags)

@@ -5,11 +5,12 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	"../lib"
-	"../pb"
 	"../log"
+	"../pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -105,7 +106,10 @@ func tcpHandler(conn net.Conn) {
 
 			_, err = conn.Write(p.Data)
 			if err != nil {
-				log.Errorf("conn write err: %s", err)
+				if !strings.Contains(err.Error(), "use of closed network connection") {
+					log.Errorf("conn write err: %s", err)
+				}
+
 				break
 			}
 		}
@@ -136,7 +140,7 @@ func tcpHandler(conn net.Conn) {
 			err = stream.Send(frame)
 			if err != nil {
 				log.Errorf("stream send err: %s", err)
-				return
+				break
 			}
 		}
 
@@ -246,12 +250,12 @@ func udpHandler(conn net.Conn) {
 				// 0x00 for fragment
 
 				/*
-				      +----+------+------+----------+----------+----------+
-				      |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
-				      +----+------+------+----------+----------+----------+
-				      | 2  |  1   |  1   | Variable |    2     | Variable |
-				      +----+------+------+----------+----------+----------+
-				 */
+				   +----+------+------+----------+----------+----------+
+				   |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
+				   +----+------+------+----------+----------+----------+
+				   | 2  |  1   |  1   | Variable |    2     | Variable |
+				   +----+------+------+----------+----------+----------+
+				*/
 
 				dst := lib.SplitAddr(buff[3:n])
 
@@ -268,7 +272,7 @@ func udpHandler(conn net.Conn) {
 					}
 				}
 
-				data := buff[3+len(dst): n]
+				data := buff[3+len(dst) : n]
 
 				err = stream.Send(&pb.Payload{Data: data})
 				if err != nil {

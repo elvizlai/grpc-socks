@@ -1,16 +1,16 @@
 package main
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
-	"crypto/tls"
 	"log"
 
 	"../../pb"
 
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var (
