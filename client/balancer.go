@@ -77,12 +77,12 @@ func (r *etcdResolver) watch(addr string) {
 
 		for k, v := range acm {
 			if v != nil {
-				if delay, err := measure(v); err == nil {
+				if delay, info, err := measure(v); err == nil {
 					if delay <= maxTolerant {
-						log.Debugf("service %s, time delay: %s", k, delay)
+						log.Debugf("service %s, time delay: %s, %q", k, delay, info)
 						list = append(list, resolver.Address{Addr: k})
 					} else {
-						log.Warnf("service %s, time delay %s too high, drop", k, delay)
+						log.Warnf("service %s, time delay %s too high, drop, %q", k, delay, info)
 						dropList = append(dropList, resolver.Address{Addr: k})
 					}
 				} else {
@@ -111,7 +111,7 @@ func (r *etcdResolver) watch(addr string) {
 
 }
 
-func measure(c pb.ProxyServiceClient) (dur time.Duration, err error) {
+func measure(c pb.ProxyServiceClient) (dur time.Duration, info string, err error) {
 	defer func(cur time.Time) {
 		dur = time.Now().Sub(cur)
 	}(time.Now())
@@ -122,8 +122,11 @@ func measure(c pb.ProxyServiceClient) (dur time.Duration, err error) {
 		go func() {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancelFunc()
-			_, err = c.Echo(ctx, &pb.Payload{})
-			errChan <- err
+			resp, e := c.Echo(ctx, &pb.Payload{})
+			if resp != nil && info == "" {
+				info = string(resp.Data)
+			}
+			errChan <- e
 		}()
 	}
 
@@ -132,9 +135,9 @@ func measure(c pb.ProxyServiceClient) (dur time.Duration, err error) {
 L:
 	for {
 		select {
-		case e := <-errChan:
-			if e != nil {
-				return dur, e
+		case err = <-errChan:
+			if err != nil {
+				return
 			}
 			rc++
 			if rc == 3 {
@@ -143,5 +146,5 @@ L:
 		}
 	}
 
-	return dur, err
+	return
 }

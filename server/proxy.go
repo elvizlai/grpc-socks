@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"net"
 	"time"
@@ -14,6 +15,7 @@ import (
 )
 
 type proxy struct {
+	serverToken []byte
 }
 
 const leakyBufSize = 4108 // data.len(2) + hmacsha1(10) + data(4096)
@@ -22,7 +24,16 @@ const maxNBuf = 2048
 var leakyBuf = lib.NewLeakyBuf(maxNBuf, leakyBufSize)
 
 func (p *proxy) Echo(ctx context.Context, req *pb.Payload) (*pb.Payload, error) {
-	return &pb.Payload{Data: []byte{0x2e, 0xf6, 0xae, 0x1e, 0x82}}, nil
+	if len(p.serverToken) == 0 {
+		buff := &bytes.Buffer{}
+
+		buff.WriteString(version)
+		buff.WriteByte('@')
+		buff.WriteString(buildAt)
+
+		p.serverToken = buff.Bytes()
+	}
+	return &pb.Payload{Data: p.serverToken}, nil
 }
 
 func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {

@@ -27,6 +27,7 @@ var tolerant uint
 var period uint
 
 var version = "self-build"
+var buildAt = ""
 
 func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
@@ -40,7 +41,7 @@ func init() {
 	flag.Parse()
 
 	if showVersion {
-		log.Infof("version: %s, using: %s", version, runtime.Version())
+		log.Infof("version:%s, build at %q using %s", version, buildAt, runtime.Version())
 		os.Exit(0)
 	}
 
