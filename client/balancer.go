@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../lib"
-	"../log"
-	"../pb"
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 
 	"strings"
 	"time"

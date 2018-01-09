@@ -6,9 +6,9 @@ import (
 	"os"
 	"runtime"
 
-	"../lib"
-	"../log"
-	"../pb"
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"

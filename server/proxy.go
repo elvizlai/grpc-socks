@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	"../lib"
-	"../log"
-	"../pb"
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"

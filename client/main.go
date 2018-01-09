@@ -7,15 +7,14 @@ import (
 	"runtime"
 	"time"
 
-	"../lib"
-	"../log"
-	"../pb"
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
+	"google.golang.org/grpc/resolver"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/encoding"
-	"google.golang.org/grpc/resolver"
 )
 
 var addr = ":50050"
@@ -124,11 +123,9 @@ var client *Client
 // using conn/client pool is better, but not necessary now
 func gRPCClient() (*Client, error) {
 	if client == nil {
-		rr := balancer.Get("round_robin")
-
 		resolver.Register(&etcdResolver{})
 
-		conn, err := grpc.Dial("proxy:///"+remoteAddr, grpc.WithBalancerBuilder(rr), grpc.WithTransportCredentials(lib.ClientTLS()))
+		conn, err := grpc.Dial("proxy:///"+remoteAddr, grpc.WithBalancerName("round_robin"), grpc.WithTransportCredentials(lib.ClientTLS()))
 		if err != nil {
 			return nil, err
 		}
