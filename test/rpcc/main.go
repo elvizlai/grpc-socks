@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"../../pb"
+	"github.com/elvizlai/grpc-socks/pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

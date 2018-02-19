@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"../../lib"
+	"github.com/elvizlai/grpc-socks/lib"
 )
 
 func main() {
