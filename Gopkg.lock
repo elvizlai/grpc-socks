@@ -20,6 +20,12 @@
   revision = "553a641470496b2327abcac10b36396bd98e45c9"
 
 [[projects]]
+  name = "github.com/soheilhy/cmux"
+  packages = ["."]
+  revision = "e09e9389d85d8492d313d73d1469c029e710623f"
+  version = "v0.1.4"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
@@ -92,6 +98,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4842d14ae439368d824d8e8bf6546d4c5aca88975abf2c2a60adbafc3d9d8507"
+  inputs-digest = "ed6fd9b2c621dca68a5cd9574a35eff876491859a881b1dd1bafa19bdc06d67e"
   solver-name = "gps-cdcl"
   solver-version = 1
