@@ -3,15 +3,18 @@ package main
 import (
 	"flag"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"runtime"
+
+	"github.com/soheilhy/cmux"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/encoding"
 
 	"github.com/elvizlai/grpc-socks/lib"
 	"github.com/elvizlai/grpc-socks/log"
 	"github.com/elvizlai/grpc-socks/pb"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/encoding"
 )
 
 var addr = ":50051"
@@ -49,12 +52,26 @@ func main() {
 
 	log.Infof("starting proxy server at %q ...", addr)
 
-	s := grpc.NewServer(grpc.Creds(lib.ServerTLS()), grpc.StreamInterceptor(interceptor))
-	defer s.GracefulStop()
+	m := cmux.New(lis)
 
-	pb.RegisterProxyServiceServer(s, &proxy{})
+	httpL := m.Match(cmux.HTTP1Fast())
+	httpS := &http.Server{
+		Handler: nil,
+	}
+	go httpS.Serve(httpL)
 
-	if err := s.Serve(lis); err != nil {
+	grpcL := m.Match(cmux.Any())
+	grpcS := grpc.NewServer(grpc.Creds(lib.ServerTLS()), grpc.StreamInterceptor(interceptor))
+	defer grpcS.GracefulStop()
+	pb.RegisterProxyServiceServer(grpcS, &proxy{})
+	go func() {
+		err := grpcS.Serve(grpcL)
+		if err != nil {
+			log.Fatalf("failed to serve grpc: %s", err.Error())
+		}
+	}()
+
+	if err := m.Serve(); err != nil {
 		log.Fatalf("failed to serve: %s", err)
 	}
 }
