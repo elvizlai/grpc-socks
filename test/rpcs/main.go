@@ -8,12 +8,12 @@ import (
 	"log"
 	"net"
 
-	"github.com/elvizlai/grpc-socks/pb"
-
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
+
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 var (

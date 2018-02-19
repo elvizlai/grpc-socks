@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/elvizlai/grpc-socks/lib"
-	"github.com/elvizlai/grpc-socks/log"
-	"github.com/elvizlai/grpc-socks/pb"
-
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
+
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 const leakyBufSize = 4108 // data.len(2) + hmacsha1(10) + data(4096)
@@ -272,7 +272,7 @@ func udpHandler(conn net.Conn) {
 					}
 				}
 
-				data := buff[3+len(dst) : n]
+				data := buff[3+len(dst): n]
 
 				err = stream.Send(&pb.Payload{Data: data})
 				if err != nil {

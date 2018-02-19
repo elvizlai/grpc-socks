@@ -1,16 +1,16 @@
 package main
 
 import (
-	"github.com/elvizlai/grpc-socks/lib"
-	"github.com/elvizlai/grpc-socks/log"
-	"github.com/elvizlai/grpc-socks/pb"
-
 	"strings"
 	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
+
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 type etcdResolver struct {

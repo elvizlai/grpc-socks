@@ -7,14 +7,14 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/elvizlai/grpc-socks/lib"
-	"github.com/elvizlai/grpc-socks/log"
-	"github.com/elvizlai/grpc-socks/pb"
-	"google.golang.org/grpc/resolver"
-
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
+	"google.golang.org/grpc/resolver"
+
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 var addr = ":50050"

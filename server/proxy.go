@@ -6,12 +6,12 @@ import (
 	"net"
 	"time"
 
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/peer"
+
 	"github.com/elvizlai/grpc-socks/lib"
 	"github.com/elvizlai/grpc-socks/log"
 	"github.com/elvizlai/grpc-socks/pb"
-
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/peer"
 )
 
 type proxy struct {

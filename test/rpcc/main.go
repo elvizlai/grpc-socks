@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/elvizlai/grpc-socks/pb"
-
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 var (
