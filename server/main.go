@@ -44,15 +44,15 @@ func init() {
 }
 
 func main() {
-	lis, err := net.Listen("tcp", addr)
+	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %s", err)
 	}
-	defer lis.Close()
+	defer ln.Close()
 
 	log.Infof("starting proxy server at %q ...", addr)
 
-	m := cmux.New(lis)
+	m := cmux.New(ln)
 
 	httpL := m.Match(cmux.HTTP1Fast())
 	httpS := &http.Server{
