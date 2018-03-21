@@ -60,9 +60,9 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 	// get peer info from ctx, maybe it won't be nil is this case
 	info, ok := peer.FromContext(ctx)
 	if ok {
-		log.Debugf("tcp conn  %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
+		log.Debugf("tcp conn %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
 	} else {
-		log.Debugf("tcp conn  %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
+		log.Debugf("tcp conn %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
 	}
 
 	isClosed := false
