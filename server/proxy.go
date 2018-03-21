@@ -47,7 +47,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 
 	addr := string(frame.Data)
 
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.DialTimeout("tcp", addr, time.Second*10)
 	if err != nil {
 		log.Errorf("tcp dial %s err: %s", addr, err)
 		return err
