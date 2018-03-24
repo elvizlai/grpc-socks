@@ -68,7 +68,10 @@ func tcpHandler(conn net.Conn) {
 		return
 	}
 
-	stream, err := client.Pipeline(context.Background(), callOptions...)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := client.Pipeline(ctx, callOptions...)
 	if err != nil {
 		log.Errorf("establish stream err: %s", err)
 		return
@@ -77,7 +80,15 @@ func tcpHandler(conn net.Conn) {
 
 	addrStr := addr.String()
 
-	info, ok := peer.FromContext(stream.Context())
+	frame := &pb.Payload{Data: []byte(addrStr)}
+	err = stream.Send(frame)
+	if err != nil {
+		log.Errorf("first frame send err: %s", err)
+		return
+	}
+
+	sCtx := stream.Context()
+	info, ok := peer.FromContext(sCtx)
 	if ok {
 		defer log.Debugf("tcp close %q<-->%q<-->%q", conn.RemoteAddr().String(), info.Addr.String(), addrStr)
 		log.Debugf("tcp estab %q<-->%q<-->%q", conn.RemoteAddr().String(), info.Addr.String(), addrStr)
@@ -86,21 +97,14 @@ func tcpHandler(conn net.Conn) {
 		log.Debugf("tcp estab %q<-->%q", conn.RemoteAddr().String(), addrStr)
 	}
 
-	isClosed := false
-
 	go func() {
 		for {
 			p, err := stream.Recv()
 
 			if err != nil {
-				if err == io.EOF {
-					break
+				if err != io.EOF && ctx.Err() != context.Canceled {
+					log.Errorf("stream recv err: %s", err)
 				}
-				log.Errorf("stream recv err: %s", err)
-				break
-			}
-
-			if isClosed {
 				break
 			}
 
@@ -109,31 +113,17 @@ func tcpHandler(conn net.Conn) {
 				if !strings.Contains(err.Error(), "use of closed network connection") {
 					log.Errorf("conn write err: %s", err)
 				}
-
 				break
 			}
 		}
-
-		isClosed = true
+		conn.Close()
 	}()
-
-	frame := &pb.Payload{Data: []byte(addrStr)}
-
-	err = stream.Send(frame)
-	if err != nil {
-		log.Errorf("first frame send err: %s", err)
-		return
-	}
 
 	buff := leakyBuf.Get()
 	defer leakyBuf.Put(buff)
 
 	for {
 		n, err := conn.Read(buff)
-
-		if isClosed {
-			break
-		}
 
 		if n > 0 {
 			frame.Data = buff[:n]
@@ -156,8 +146,6 @@ func tcpHandler(conn net.Conn) {
 			break
 		}
 	}
-
-	isClosed = true
 }
 
 func udpHandler(conn net.Conn) {
