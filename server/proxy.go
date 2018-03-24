@@ -49,7 +49,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 
 	conn, err := net.DialTimeout("tcp", addr, time.Second*10)
 	if err != nil {
-		log.Errorf("tcp dial %s err: %s", addr, err)
+		log.Errorf("tcp dial %q err: %s", addr, err)
 		return err
 	}
 	defer conn.Close()
@@ -60,63 +60,50 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 	// get peer info from ctx, maybe it won't be nil is this case
 	info, ok := peer.FromContext(ctx)
 	if ok {
+		defer log.Debugf("tcp close %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
 		log.Debugf("tcp conn %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
 	} else {
+		defer log.Debugf("tcp close %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
 		log.Debugf("tcp conn %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
 	}
 
-	isClosed := false
-
 	go func() {
-		buff := leakyBuf.Get()
-		defer leakyBuf.Put(buff)
-
 		for {
-			n, err := conn.Read(buff)
-
-			if n > 0 {
-				frame.Data = buff[:n]
-				err = stream.Send(frame)
-				if err != nil {
-					log.Errorf("stream send err: %s", err)
-					break
-				}
-			}
+			p, err := stream.Recv()
 
 			if err != nil {
+				if ctx.Err() != context.Canceled && err != io.EOF {
+					log.Errorf("stream recv err: %s", err)
+				}
+				break
+			}
+
+			_, err = conn.Write(p.Data)
+			if err != nil {
+				log.Errorf("tcp conn write err: %s", err)
 				break
 			}
 		}
-
-		isClosed = true
+		conn.Close() // close conn
 	}()
 
+	buff := leakyBuf.Get()
+	defer leakyBuf.Put(buff)
+
 	for {
-		p, err := stream.Recv()
-
+		n, err := conn.Read(buff)
 		if err != nil {
-			if ctx.Err() == context.Canceled || err == io.EOF {
-				break
-			}
-			log.Errorf("stream recv err: %s", err)
-			return err
-		}
-
-		if isClosed {
 			break
 		}
 
-		_, err = conn.Write(p.Data)
-		if err != nil {
-			log.Errorf("tcp conn write err: %s", err)
-			return err
+		if n > 0 {
+			frame.Data = buff[:n]
+			err = stream.Send(frame)
+			if err != nil {
+				log.Errorf("stream send err: %s", err)
+				break
+			}
 		}
-	}
-
-	if ok {
-		log.Debugf("tcp close %q<-->%q<-->%q", info.Addr.String(), addr, conn.RemoteAddr())
-	} else {
-		log.Debugf("tcp close %q<-->%q<-->%q", conn.LocalAddr(), addr, conn.RemoteAddr())
 	}
 
 	return nil
