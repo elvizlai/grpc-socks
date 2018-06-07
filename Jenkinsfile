@@ -1,13 +1,8 @@
 pipeline {
   agent any
   stages {
-    stage('') {
-      agent {
-        docker {
-          image 'go'
-        }
-
-      }
+    stage('error') {
+      agent any
       steps {
         build 'go build'
       }
