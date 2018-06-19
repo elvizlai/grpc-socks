@@ -212,6 +212,7 @@ func Handshake(rw io.ReadWriter) (int, error) {
 	return int(buf[1]), nil
 }
 
+// GetReqAddr get remove addr
 func GetReqAddr(rw io.ReadWriter) (Addr, error) {
 
 	/*
