@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"io"
 	"net"
 	"time"
@@ -24,21 +23,13 @@ const maxNBuf = 2048
 var leakyBuf = lib.NewLeakyBuf(maxNBuf, leakyBufSize)
 
 func (p *proxy) Echo(ctx context.Context, req *pb.Payload) (*pb.Payload, error) {
-	if len(p.serverToken) == 0 {
-		buff := &bytes.Buffer{}
-
-		buff.WriteString(version)
-		buff.WriteByte('@')
-		buff.WriteString(buildAt)
-
-		p.serverToken = buff.Bytes()
-	}
 	return &pb.Payload{Data: p.serverToken}, nil
 }
 
 func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 	frame := &pb.Payload{}
 
+	// first frame
 	err := stream.RecvMsg(frame)
 	if err != nil {
 		log.Errorf("tcp first frame err: %s", err)
@@ -47,7 +38,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 
 	addr := string(frame.Data)
 
-	conn, err := net.DialTimeout("tcp", addr, time.Second*10)
+	conn, err := net.DialTimeout("tcp", addr, time.Second*15)
 	if err != nil {
 		log.Errorf("tcp dial %q err: %s", addr, err)
 		return err

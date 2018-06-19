@@ -63,7 +63,7 @@ func main() {
 	grpcL := m.Match(cmux.Any())
 	grpcS := grpc.NewServer(grpc.Creds(lib.ServerTLS()), grpc.StreamInterceptor(interceptor))
 	defer grpcS.GracefulStop()
-	pb.RegisterProxyServiceServer(grpcS, &proxy{})
+	pb.RegisterProxyServiceServer(grpcS, &proxy{serverToken: append([]byte(version), append([]byte("@"), []byte(buildAt)...)...)})
 	go func() {
 		err := grpcS.Serve(grpcL)
 		if err != nil {
