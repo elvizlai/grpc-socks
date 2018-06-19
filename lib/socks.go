@@ -6,7 +6,10 @@ import (
 	"strconv"
 )
 
-const UDPMaxSize = 65507
+// UDP max package size
+const (
+	UDPMaxSize = 65507
+)
 
 // SOCKS request commands as defined in RFC 1928 section 4.
 const (
@@ -160,7 +163,6 @@ func SplitAddr(b []byte) Addr {
 // Handshake fast-tracks SOCKS initialization to get target address to connect.
 // convert cmd to tcp, BIND and udp
 // https://tools.ietf.org/html/rfc1928
-
 func Handshake(rw io.ReadWriter) (int, error) {
 	// Read RFC 1928 for request and reply structure and sizes.
 

@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 
-	"github.com/elvizlai/grpc-socks/pb"
+	"grpc-socks/pb"
 )
 
 var (

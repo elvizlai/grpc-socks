@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
 
-	"github.com/elvizlai/grpc-socks/lib"
-	"github.com/elvizlai/grpc-socks/log"
-	"github.com/elvizlai/grpc-socks/pb"
+	"grpc-socks/lib"
+	"grpc-socks/log"
+	"grpc-socks/pb"
 )
 
 var addr = ":50051"

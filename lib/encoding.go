@@ -10,6 +10,7 @@ import (
 type snappyCP struct {
 }
 
+// Snappy compressor
 func Snappy() encoding.Compressor {
 	return &snappyCP{}
 }

@@ -10,11 +10,12 @@ package lib
 import (
 	"context"
 	"crypto/tls"
-	"golang.org/x/net/http2"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"golang.org/x/net/http2"
 )
 
 var client = &http.Client{}

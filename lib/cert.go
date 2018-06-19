@@ -64,6 +64,7 @@ zXPJfyC/bgm20s7B029Ojmwy3ReoTY2oL2hCeRRiUXp82Az+wCQ=
 -----END RSA PRIVATE KEY-----
 `)
 
+// ServerTLS server tls
 func ServerTLS() credentials.TransportCredentials {
 	cert, err := tls.X509KeyPair(certPEMBlock, keyPEMBlock)
 	if err != nil {
@@ -73,6 +74,7 @@ func ServerTLS() credentials.TransportCredentials {
 	return credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}})
 }
 
+// ClientTLS client tls
 func ClientTLS() credentials.TransportCredentials {
 	cp := x509.NewCertPool()
 	if !cp.AppendCertsFromPEM(certPEMBlock) {

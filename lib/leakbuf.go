@@ -1,6 +1,7 @@
-// stolen form ss
+// Package lib leakbuf.go is stolen form ss
 package lib
 
+// LeakyBuf leakybuf
 type LeakyBuf struct {
 	bufSize  int // size of each buffer
 	freeList chan []byte

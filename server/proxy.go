@@ -9,9 +9,9 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 
-	"github.com/elvizlai/grpc-socks/lib"
-	"github.com/elvizlai/grpc-socks/log"
-	"github.com/elvizlai/grpc-socks/pb"
+	"grpc-socks/lib"
+	"grpc-socks/log"
+	"grpc-socks/pb"
 )
 
 type proxy struct {
