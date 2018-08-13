@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"grpc-socks/pb"
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 var (

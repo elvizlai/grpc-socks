@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
 
-	"grpc-socks/lib"
-	"grpc-socks/log"
-	"grpc-socks/pb"
+	"github.com/elvizlai/grpc-socks/lib"
+	"github.com/elvizlai/grpc-socks/log"
+	"github.com/elvizlai/grpc-socks/pb"
 )
 
 type etcdResolver struct {
