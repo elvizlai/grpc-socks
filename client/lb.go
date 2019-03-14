@@ -28,7 +28,7 @@ func (r *etcdResolver) Build(target resolver.Target, cc resolver.ClientConn, opt
 }
 
 func (r etcdResolver) Scheme() string {
-	return "proxy"
+	return "lb"
 }
 
 func (r etcdResolver) ResolveNow(rn resolver.ResolveNowOption) {
@@ -59,13 +59,13 @@ func (r *etcdResolver) watch(addr string) {
 	}
 
 	//delay test
-	var acm = make(map[string]pb.ProxyServiceClient, 0)
+	var acm = make(map[string]pb.ProxyClient, 0)
 	for i := range addrList {
 		conn, err := grpc.Dial(addrList[i], grpc.WithTransportCredentials(lib.ClientTLS()))
 		if err != nil {
 			acm[addrList[i]] = nil
 		} else {
-			acm[addrList[i]] = pb.NewProxyServiceClient(conn)
+			acm[addrList[i]] = pb.NewProxyClient(conn)
 		}
 	}
 
@@ -111,7 +111,7 @@ func (r *etcdResolver) watch(addr string) {
 
 }
 
-func measure(c pb.ProxyServiceClient) (dur time.Duration, info string, err error) {
+func measure(c pb.ProxyClient) (dur time.Duration, info string, err error) {
 	defer func(cur time.Time) {
 		dur = time.Now().Sub(cur)
 	}(time.Now())

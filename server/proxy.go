@@ -18,15 +18,27 @@ type proxy struct {
 }
 
 const leakyBufSize = 4108 // data.len(2) + hmacsha1(10) + data(4096)
-const maxNBuf = 2048
 
-var leakyBuf = lib.NewLeakyBuf(maxNBuf, leakyBufSize)
+var leakyBuf = lib.NewLeakyBuf(2048, leakyBufSize)
 
 func (p *proxy) Echo(ctx context.Context, req *pb.Payload) (*pb.Payload, error) {
 	return &pb.Payload{Data: p.serverToken}, nil
 }
 
-func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
+// TODO buff
+func (p *proxy) ResolveIP(ctx context.Context, req *pb.IPAddr) (*pb.IPAddr, error) {
+	ipAddr, err := net.ResolveIPAddr("ip", req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Data = ipAddr.IP
+	req.Zone = ipAddr.Zone
+
+	return req, nil
+}
+
+func (p *proxy) Pump(stream pb.Proxy_PumpServer) error {
 	frame := &pb.Payload{}
 
 	// first frame
@@ -37,6 +49,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 	}
 
 	addr := string(frame.Data)
+	// addr must be a name?
 
 	conn, err := net.DialTimeout("tcp", addr, time.Second*15)
 	if err != nil {
@@ -100,7 +113,7 @@ func (p *proxy) Pipeline(stream pb.ProxyService_PipelineServer) error {
 	return nil
 }
 
-func (p *proxy) PipelineUDP(stream pb.ProxyService_PipelineUDPServer) error {
+func (p *proxy) PipelineUDP(stream pb.Proxy_PipelineUDPServer) error {
 	frame := &pb.Payload{}
 
 	err := stream.RecvMsg(frame)

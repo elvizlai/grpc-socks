@@ -34,7 +34,7 @@ func (m *Payload) Reset()         { *m = Payload{} }
 func (m *Payload) String() string { return proto.CompactTextString(m) }
 func (*Payload) ProtoMessage()    {}
 func (*Payload) Descriptor() ([]byte, []int) {
-	return fileDescriptor_msg_b26e927a13f14216, []int{0}
+	return fileDescriptor_msg_1cc3c4c731d1ef0f, []int{0}
 }
 func (m *Payload) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Payload.Unmarshal(m, b)
@@ -61,8 +61,80 @@ func (m *Payload) GetData() []byte {
 	return nil
 }
 
+type IPAddr struct {
+	// option map_entry = true;
+	Address              string   `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Data                 []byte   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	Zone                 string   `protobuf:"bytes,3,opt,name=zone,proto3" json:"zone,omitempty"`
+	CreateAt             int64    `protobuf:"varint,4,opt,name=create_at,json=createAt,proto3" json:"create_at,omitempty"`
+	CreateAt1            int64    `protobuf:"varint,5,opt,name=create_at1,json=createAt1,proto3" json:"create_at1,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *IPAddr) Reset()         { *m = IPAddr{} }
+func (m *IPAddr) String() string { return proto.CompactTextString(m) }
+func (*IPAddr) ProtoMessage()    {}
+func (*IPAddr) Descriptor() ([]byte, []int) {
+	return fileDescriptor_msg_1cc3c4c731d1ef0f, []int{1}
+}
+func (m *IPAddr) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_IPAddr.Unmarshal(m, b)
+}
+func (m *IPAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_IPAddr.Marshal(b, m, deterministic)
+}
+func (dst *IPAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IPAddr.Merge(dst, src)
+}
+func (m *IPAddr) XXX_Size() int {
+	return xxx_messageInfo_IPAddr.Size(m)
+}
+func (m *IPAddr) XXX_DiscardUnknown() {
+	xxx_messageInfo_IPAddr.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_IPAddr proto.InternalMessageInfo
+
+func (m *IPAddr) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+func (m *IPAddr) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+func (m *IPAddr) GetZone() string {
+	if m != nil {
+		return m.Zone
+	}
+	return ""
+}
+
+func (m *IPAddr) GetCreateAt() int64 {
+	if m != nil {
+		return m.CreateAt
+	}
+	return 0
+}
+
+func (m *IPAddr) GetCreateAt1() int64 {
+	if m != nil {
+		return m.CreateAt1
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*Payload)(nil), "pb.Payload")
+	proto.RegisterType((*IPAddr)(nil), "pb.IPAddr")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -73,56 +145,66 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// ProxyServiceClient is the client API for ProxyService service.
+// ProxyClient is the client API for Proxy service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type ProxyServiceClient interface {
+type ProxyClient interface {
 	Echo(ctx context.Context, in *Payload, opts ...grpc.CallOption) (*Payload, error)
-	Pipeline(ctx context.Context, opts ...grpc.CallOption) (ProxyService_PipelineClient, error)
-	PipelineUDP(ctx context.Context, opts ...grpc.CallOption) (ProxyService_PipelineUDPClient, error)
+	ResolveIP(ctx context.Context, in *IPAddr, opts ...grpc.CallOption) (*IPAddr, error)
+	Pump(ctx context.Context, opts ...grpc.CallOption) (Proxy_PumpClient, error)
+	PipelineUDP(ctx context.Context, opts ...grpc.CallOption) (Proxy_PipelineUDPClient, error)
 }
 
-type proxyServiceClient struct {
+type proxyClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewProxyServiceClient(cc *grpc.ClientConn) ProxyServiceClient {
-	return &proxyServiceClient{cc}
+func NewProxyClient(cc *grpc.ClientConn) ProxyClient {
+	return &proxyClient{cc}
 }
 
-func (c *proxyServiceClient) Echo(ctx context.Context, in *Payload, opts ...grpc.CallOption) (*Payload, error) {
+func (c *proxyClient) Echo(ctx context.Context, in *Payload, opts ...grpc.CallOption) (*Payload, error) {
 	out := new(Payload)
-	err := c.cc.Invoke(ctx, "/pb.ProxyService/Echo", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.Proxy/Echo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *proxyServiceClient) Pipeline(ctx context.Context, opts ...grpc.CallOption) (ProxyService_PipelineClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_ProxyService_serviceDesc.Streams[0], "/pb.ProxyService/Pipeline", opts...)
+func (c *proxyClient) ResolveIP(ctx context.Context, in *IPAddr, opts ...grpc.CallOption) (*IPAddr, error) {
+	out := new(IPAddr)
+	err := c.cc.Invoke(ctx, "/pb.Proxy/ResolveIP", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &proxyServicePipelineClient{stream}
+	return out, nil
+}
+
+func (c *proxyClient) Pump(ctx context.Context, opts ...grpc.CallOption) (Proxy_PumpClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Proxy_serviceDesc.Streams[0], "/pb.Proxy/Pump", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &proxyPumpClient{stream}
 	return x, nil
 }
 
-type ProxyService_PipelineClient interface {
+type Proxy_PumpClient interface {
 	Send(*Payload) error
 	Recv() (*Payload, error)
 	grpc.ClientStream
 }
 
-type proxyServicePipelineClient struct {
+type proxyPumpClient struct {
 	grpc.ClientStream
 }
 
-func (x *proxyServicePipelineClient) Send(m *Payload) error {
+func (x *proxyPumpClient) Send(m *Payload) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *proxyServicePipelineClient) Recv() (*Payload, error) {
+func (x *proxyPumpClient) Recv() (*Payload, error) {
 	m := new(Payload)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -130,30 +212,30 @@ func (x *proxyServicePipelineClient) Recv() (*Payload, error) {
 	return m, nil
 }
 
-func (c *proxyServiceClient) PipelineUDP(ctx context.Context, opts ...grpc.CallOption) (ProxyService_PipelineUDPClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_ProxyService_serviceDesc.Streams[1], "/pb.ProxyService/PipelineUDP", opts...)
+func (c *proxyClient) PipelineUDP(ctx context.Context, opts ...grpc.CallOption) (Proxy_PipelineUDPClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Proxy_serviceDesc.Streams[1], "/pb.Proxy/PipelineUDP", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &proxyServicePipelineUDPClient{stream}
+	x := &proxyPipelineUDPClient{stream}
 	return x, nil
 }
 
-type ProxyService_PipelineUDPClient interface {
+type Proxy_PipelineUDPClient interface {
 	Send(*Payload) error
 	Recv() (*Payload, error)
 	grpc.ClientStream
 }
 
-type proxyServicePipelineUDPClient struct {
+type proxyPipelineUDPClient struct {
 	grpc.ClientStream
 }
 
-func (x *proxyServicePipelineUDPClient) Send(m *Payload) error {
+func (x *proxyPipelineUDPClient) Send(m *Payload) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *proxyServicePipelineUDPClient) Recv() (*Payload, error) {
+func (x *proxyPipelineUDPClient) Recv() (*Payload, error) {
 	m := new(Payload)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -161,54 +243,73 @@ func (x *proxyServicePipelineUDPClient) Recv() (*Payload, error) {
 	return m, nil
 }
 
-// ProxyServiceServer is the server API for ProxyService service.
-type ProxyServiceServer interface {
+// ProxyServer is the server API for Proxy service.
+type ProxyServer interface {
 	Echo(context.Context, *Payload) (*Payload, error)
-	Pipeline(ProxyService_PipelineServer) error
-	PipelineUDP(ProxyService_PipelineUDPServer) error
+	ResolveIP(context.Context, *IPAddr) (*IPAddr, error)
+	Pump(Proxy_PumpServer) error
+	PipelineUDP(Proxy_PipelineUDPServer) error
 }
 
-func RegisterProxyServiceServer(s *grpc.Server, srv ProxyServiceServer) {
-	s.RegisterService(&_ProxyService_serviceDesc, srv)
+func RegisterProxyServer(s *grpc.Server, srv ProxyServer) {
+	s.RegisterService(&_Proxy_serviceDesc, srv)
 }
 
-func _ProxyService_Echo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Proxy_Echo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Payload)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProxyServiceServer).Echo(ctx, in)
+		return srv.(ProxyServer).Echo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.ProxyService/Echo",
+		FullMethod: "/pb.Proxy/Echo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProxyServiceServer).Echo(ctx, req.(*Payload))
+		return srv.(ProxyServer).Echo(ctx, req.(*Payload))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProxyService_Pipeline_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ProxyServiceServer).Pipeline(&proxyServicePipelineServer{stream})
+func _Proxy_ResolveIP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IPAddr)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProxyServer).ResolveIP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Proxy/ResolveIP",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProxyServer).ResolveIP(ctx, req.(*IPAddr))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type ProxyService_PipelineServer interface {
+func _Proxy_Pump_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ProxyServer).Pump(&proxyPumpServer{stream})
+}
+
+type Proxy_PumpServer interface {
 	Send(*Payload) error
 	Recv() (*Payload, error)
 	grpc.ServerStream
 }
 
-type proxyServicePipelineServer struct {
+type proxyPumpServer struct {
 	grpc.ServerStream
 }
 
-func (x *proxyServicePipelineServer) Send(m *Payload) error {
+func (x *proxyPumpServer) Send(m *Payload) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *proxyServicePipelineServer) Recv() (*Payload, error) {
+func (x *proxyPumpServer) Recv() (*Payload, error) {
 	m := new(Payload)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -216,25 +317,25 @@ func (x *proxyServicePipelineServer) Recv() (*Payload, error) {
 	return m, nil
 }
 
-func _ProxyService_PipelineUDP_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ProxyServiceServer).PipelineUDP(&proxyServicePipelineUDPServer{stream})
+func _Proxy_PipelineUDP_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ProxyServer).PipelineUDP(&proxyPipelineUDPServer{stream})
 }
 
-type ProxyService_PipelineUDPServer interface {
+type Proxy_PipelineUDPServer interface {
 	Send(*Payload) error
 	Recv() (*Payload, error)
 	grpc.ServerStream
 }
 
-type proxyServicePipelineUDPServer struct {
+type proxyPipelineUDPServer struct {
 	grpc.ServerStream
 }
 
-func (x *proxyServicePipelineUDPServer) Send(m *Payload) error {
+func (x *proxyPipelineUDPServer) Send(m *Payload) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *proxyServicePipelineUDPServer) Recv() (*Payload, error) {
+func (x *proxyPipelineUDPServer) Recv() (*Payload, error) {
 	m := new(Payload)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -242,25 +343,29 @@ func (x *proxyServicePipelineUDPServer) Recv() (*Payload, error) {
 	return m, nil
 }
 
-var _ProxyService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.ProxyService",
-	HandlerType: (*ProxyServiceServer)(nil),
+var _Proxy_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.Proxy",
+	HandlerType: (*ProxyServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Echo",
-			Handler:    _ProxyService_Echo_Handler,
+			Handler:    _Proxy_Echo_Handler,
+		},
+		{
+			MethodName: "ResolveIP",
+			Handler:    _Proxy_ResolveIP_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Pipeline",
-			Handler:       _ProxyService_Pipeline_Handler,
+			StreamName:    "Pump",
+			Handler:       _Proxy_Pump_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "PipelineUDP",
-			Handler:       _ProxyService_PipelineUDP_Handler,
+			Handler:       _Proxy_PipelineUDP_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
@@ -268,17 +373,24 @@ var _ProxyService_serviceDesc = grpc.ServiceDesc{
 	Metadata: "pb/msg.proto",
 }
 
-func init() { proto.RegisterFile("pb/msg.proto", fileDescriptor_msg_b26e927a13f14216) }
+func init() { proto.RegisterFile("pb/msg.proto", fileDescriptor_msg_1cc3c4c731d1ef0f) }
 
-var fileDescriptor_msg_b26e927a13f14216 = []byte{
-	// 142 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x48, 0xd2, 0xcf,
-	0x2d, 0x4e, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48, 0x52, 0x92, 0xe5, 0x62,
-	0x0f, 0x48, 0xac, 0xcc, 0xc9, 0x4f, 0x4c, 0x11, 0x12, 0xe2, 0x62, 0x49, 0x49, 0x2c, 0x49, 0x94,
-	0x60, 0x54, 0x60, 0xd4, 0xe0, 0x09, 0x02, 0xb3, 0x8d, 0x7a, 0x19, 0xb9, 0x78, 0x02, 0x8a, 0xf2,
-	0x2b, 0x2a, 0x83, 0x53, 0x8b, 0xca, 0x32, 0x93, 0x53, 0x85, 0x94, 0xb8, 0x58, 0x5c, 0x93, 0x33,
-	0xf2, 0x85, 0xb8, 0xf5, 0x0a, 0x92, 0xf4, 0xa0, 0x3a, 0xa5, 0x90, 0x39, 0x4a, 0x0c, 0x42, 0x5a,
-	0x5c, 0x1c, 0x01, 0x99, 0x05, 0xa9, 0x39, 0x99, 0x79, 0xa9, 0xf8, 0xd4, 0x69, 0x30, 0x1a, 0x30,
-	0x0a, 0xe9, 0x72, 0x71, 0xc3, 0xd4, 0x86, 0xba, 0x04, 0x10, 0x52, 0x9e, 0xc4, 0x06, 0x76, 0xb9,
-	0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x75, 0x05, 0x7f, 0xbe, 0xc9, 0x00, 0x00, 0x00,
+var fileDescriptor_msg_1cc3c4c731d1ef0f = []byte{
+	// 247 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x90, 0x4f, 0x4e, 0x02, 0x31,
+	0x14, 0xc6, 0xe9, 0x30, 0x80, 0xf3, 0x60, 0xf5, 0x56, 0x0d, 0x09, 0x91, 0x34, 0xd1, 0xcc, 0xc6,
+	0x11, 0xf4, 0x04, 0x18, 0x5d, 0xb0, 0x6b, 0x9a, 0xb8, 0x36, 0x1d, 0xfa, 0xa2, 0x24, 0x03, 0x6d,
+	0xda, 0x6a, 0xc4, 0x23, 0x78, 0x13, 0x6f, 0x69, 0xa6, 0x08, 0xb2, 0xd2, 0xdd, 0xf7, 0xe7, 0xf7,
+	0x35, 0x6d, 0x61, 0xe4, 0xea, 0xeb, 0x4d, 0x78, 0xae, 0x9c, 0xb7, 0xd1, 0x62, 0xe6, 0x6a, 0x31,
+	0x81, 0x81, 0xd4, 0xbb, 0xc6, 0x6a, 0x83, 0x08, 0xb9, 0xd1, 0x51, 0x73, 0x36, 0x65, 0xe5, 0x48,
+	0x25, 0x2d, 0x3e, 0x19, 0xf4, 0x97, 0x72, 0x61, 0x8c, 0x47, 0x0e, 0x03, 0x6d, 0x8c, 0xa7, 0x10,
+	0x12, 0x51, 0xa8, 0x83, 0x3d, 0x0e, 0xb3, 0xdf, 0x61, 0x9b, 0x7d, 0xd8, 0x2d, 0xf1, 0x6e, 0x42,
+	0x93, 0xc6, 0x73, 0x28, 0x56, 0x9e, 0x74, 0xa4, 0x27, 0x1d, 0x79, 0x3e, 0x65, 0x65, 0xf7, 0x2e,
+	0x9b, 0x65, 0xea, 0x6c, 0x1f, 0x2e, 0x22, 0x4e, 0x00, 0x8e, 0xc0, 0x9c, 0xf7, 0x5a, 0x42, 0x15,
+	0x87, 0x76, 0x7e, 0xf3, 0xc5, 0xa0, 0x27, 0xbd, 0x7d, 0xdf, 0xa1, 0x80, 0xfc, 0x61, 0xf5, 0x62,
+	0x71, 0x58, 0xb9, 0xba, 0xfa, 0xb9, 0xff, 0xf8, 0xd4, 0x88, 0x0e, 0x5e, 0x40, 0xa1, 0x28, 0xd8,
+	0xe6, 0x8d, 0x96, 0x12, 0xa1, 0xed, 0xf6, 0x0f, 0x19, 0x9f, 0x68, 0xd1, 0xc1, 0x4b, 0xc8, 0xe5,
+	0xeb, 0xc6, 0xfd, 0x75, 0x54, 0xc9, 0x66, 0x0c, 0xaf, 0x60, 0x28, 0xd7, 0x8e, 0x9a, 0xf5, 0x96,
+	0x1e, 0xef, 0xe5, 0x7f, 0x78, 0xdd, 0x4f, 0x5f, 0x7c, 0xfb, 0x1d, 0x00, 0x00, 0xff, 0xff, 0xf2,
+	0xb8, 0xd1, 0x42, 0x72, 0x01, 0x00, 0x00,
 }

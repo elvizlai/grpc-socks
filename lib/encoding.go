@@ -7,6 +7,8 @@ import (
 	"google.golang.org/grpc/encoding"
 )
 
+const UDPMaxSize = 65507
+
 type snappyCP struct {
 }
 

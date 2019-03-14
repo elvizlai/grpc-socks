@@ -6,13 +6,21 @@ message Payload {
     bytes data = 1;
 }
 
-service ProxyService {
-    rpc Echo (Payload) returns (Payload) {
-    };
+message IPAddr {
+    // option map_entry = true;
+    string address = 1;
+    bytes data = 2;
+    string zone = 3;
+    int64 create_at = 4 [jstype=JS_NUMBER];
+    int64 create_at1 = 5;
+}
 
-    rpc Pipeline (stream Payload) returns (stream Payload) {
-    };
+service Proxy {
+    rpc Echo (Payload) returns (Payload) {};
 
-    rpc PipelineUDP (stream Payload) returns (stream Payload) {
-    };
+    rpc ResolveIP(IPAddr) returns (IPAddr) {};
+
+    rpc Pump (stream Payload) returns (stream Payload) {};
+
+    rpc PipelineUDP (stream Payload) returns (stream Payload) {};
 }

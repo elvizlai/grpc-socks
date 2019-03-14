@@ -17,12 +17,16 @@ import (
 	"github.com/elvizlai/grpc-socks/pb"
 )
 
-var addr = ":50051"
-var debug = false
-var showVersion bool
+var (
+	addr  = ":50051"
+	debug = false
+)
 
-var version = "self-build"
-var buildAt = ""
+var (
+	showVersion = false
+	version     = "self-build"
+	buildAt     = ""
+)
 
 func init() {
 	flag.StringVar(&addr, "l", addr, "listen addr")
@@ -63,7 +67,9 @@ func main() {
 	grpcL := m.Match(cmux.Any())
 	grpcS := grpc.NewServer(grpc.Creds(lib.ServerTLS()), grpc.StreamInterceptor(interceptor))
 	defer grpcS.GracefulStop()
-	pb.RegisterProxyServiceServer(grpcS, &proxy{serverToken: append([]byte(version), append([]byte("@"), []byte(buildAt)...)...)})
+	pb.RegisterProxyServer(grpcS, &proxy{
+		serverToken: append([]byte(version), append([]byte("@"), []byte(buildAt)...)...),
+	})
 	go func() {
 		err := grpcS.Serve(grpcL)
 		if err != nil {
